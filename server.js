@@ -1,7 +1,9 @@
 const express = require('express');
 const fs = require('fs');
-const db = require('./db/db.json');
+//const db = require('./db/db.json');
 const uniqid = require('uniqid');
+const dbUtils = require('./db/dbUtils.js')
+
 let PORT = process.env.PORT || 3000;
 
 //express app
@@ -29,24 +31,29 @@ app.get('/notes', (req, res) => {
 });
 
 //API routes
+//GET API Notes
 app.get('/api/notes', (req, res) => {
-    res.json(db);
+    fs.readFile('db/db.json', 'utf8', (err, data) => {
+        res.json(JSON.parse(data));
+    });
+    
 })
 
+//POST API Notes
 app.post('/api/notes',(req, res) => {
     //console.info(`${req.method} request received to add note.`);
     //console.info(req.body)
     let entry = {
         id: uniqid(),
-        title: req.body['title'],
-        text: req.body['text']
+        title: req.body.title,
+        text: req.body.text
     }
 
-    fs.readFile('./db/db.json', 'utf8', (err, json) => {
+    fs.readFile('db/db.json', 'utf8', (err, json) => {
         //Add the new entry to the arr
-        let arr = JSON.parse(json);
+        const arr = JSON.parse(json);
         arr.push(entry);
-        arrString = JSON.stringify(arr);
+        const arrString = JSON.stringify(arr, null, 2);
         
         //Write the new array back to the file
         fs.writeFile('./db/db.json', arrString, (err) => {
@@ -67,22 +74,23 @@ app.post('/api/notes',(req, res) => {
     });
 })
 
+//DELETE API Notes
 app.delete('/api/notes/*', (req, res) => {
     let path = req.path;
     let pathArr = path.split('/');
     let id = pathArr[pathArr.length - 1]
 
-    fs.readFile('./db/db.json', 'utf8', (err, json) => {
+    fs.readFile('db/db.json', 'utf8', (err, json) => {
         //Remove from the arr by id
         let arr = JSON.parse(json);
         arr = arr.filter((x) => {
             return x.id !== id 
         })
 
-        let arrString = JSON.stringify(arr);
+        let arrString = JSON.stringify(arr, null, 2);
 
         //write new id to json
-        fs.writeFile('./db/db.json', arrString, (err) => {
+        fs.writeFile('db/db.json', arrString, (err) => {
             if(err) {
                 console.log(err);
                 return;
